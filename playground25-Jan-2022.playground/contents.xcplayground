@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<playground version='6.0' target-platform='ios'>
+    <pages>
+        <page name='MVVM Basic'/>
+        <page name='MVVM Basic 2 + UIKit'/>
+        <page name='MVVM Basic Dependencies'/>
+    </pages>
+</playground>
