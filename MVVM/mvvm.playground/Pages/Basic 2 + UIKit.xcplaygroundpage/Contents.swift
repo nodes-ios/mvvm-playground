@@ -45,7 +45,7 @@ struct LoginView: View {
         VStack {
             TextField(
                 "",
-                text: Binding(
+                text: Binding( // Create a custom binding to be able to pass data through a function on the VM
                     get: { viewModel.email },
                     set: viewModel.emailChanged
                 )
