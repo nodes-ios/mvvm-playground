@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		BDC59D3827A839320054A19B /* CombineSchedulers in Frameworks */ = {isa = PBXBuildFile; productRef = BDC59D3727A839320054A19B /* CombineSchedulers */; };
+		BDF647B827BE381100EF94EF /* XCTestDynamicOverlay in Frameworks */ = {isa = PBXBuildFile; productRef = BDF647B727BE381100EF94EF /* XCTestDynamicOverlay */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +22,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BDF647B827BE381100EF94EF /* XCTestDynamicOverlay in Frameworks */,
 				BDC59D3827A839320054A19B /* CombineSchedulers in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,6 +73,7 @@
 			name = MVVM;
 			packageProductDependencies = (
 				BDC59D3727A839320054A19B /* CombineSchedulers */,
+				BDF647B727BE381100EF94EF /* XCTestDynamicOverlay */,
 			);
 			productName = MVVM;
 			productReference = BDC59D1F27A82C820054A19B /* MVVM.app */;
@@ -102,6 +105,7 @@
 			mainGroup = BDC59D1627A82C810054A19B;
 			packageReferences = (
 				BDC59D3627A839320054A19B /* XCRemoteSwiftPackageReference "combine-schedulers" */,
+				BDF647B627BE381100EF94EF /* XCRemoteSwiftPackageReference "xctest-dynamic-overlay" */,
 			);
 			productRefGroup = BDC59D2027A82C820054A19B /* Products */;
 			projectDirPath = "";
@@ -335,6 +339,14 @@
 				minimumVersion = 0.5.3;
 			};
 		};
+		BDF647B627BE381100EF94EF /* XCRemoteSwiftPackageReference "xctest-dynamic-overlay" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/xctest-dynamic-overlay.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.2.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -342,6 +354,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BDC59D3627A839320054A19B /* XCRemoteSwiftPackageReference "combine-schedulers" */;
 			productName = CombineSchedulers;
+		};
+		BDF647B727BE381100EF94EF /* XCTestDynamicOverlay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BDF647B627BE381100EF94EF /* XCRemoteSwiftPackageReference "xctest-dynamic-overlay" */;
+			productName = XCTestDynamicOverlay;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
