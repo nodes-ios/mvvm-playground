@@ -4,7 +4,7 @@
         <page name='Basic'/>
         <page name='Basic 2 + UIKit'/>
         <page name='Basic Dependencies'/>
-        <page name='[WIP]Advanced dependencies'/>
+        <page name='Advanced dependencies'/>
         <page name='[WIP]Mixing VIPER and MVVM'/>
         <page name='[WIP]Testing VIPER, easy edition'/>
     </pages>
