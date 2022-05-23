@@ -23,15 +23,17 @@ struct APIClient {
 // Create different behaviours using instances
 extension APIClient {
     static let happyMock = APIClient { _ in Just("MockToken").setFailureType(to: APIError.self).eraseToAnyPublisher() }
-    static let unhappyMock = APIClient { _ in Fail(error: APIError(
-        message: "ErrorText",
-        code: 403)
+
+    static let unhappyMock = APIClient { _ in Fail(
+        error: APIError(
+            message: "ErrorText",
+            code: 403
+        )
     ).eraseToAnyPublisher() }
     
     /// create an APIClient that will evoke an XCTFail for all endpoints if called, cmd
     static let failing = APIClient { _ in .failing("\(Self.self).login is not implemented") }
 }
-
 
 struct LoginEnvironment {
     var mainQueue: AnySchedulerOf<DispatchQueue>
@@ -45,12 +47,16 @@ extension LoginEnvironment {
         apiClient: .happyMock
     )
     
-    static let failing = Self(
+    static let test = Self(
         mainQueue: .failing("\(Self.self).mainQueue is not implemented"),
         apiClient: .failing
     )
-}
 
+    static let failing = Self(
+        mainQueue: .main.eraseToAnyScheduler(),
+        apiClient: .unhappyMock
+    )
+}
 
 class LoginViewModel: ObservableObject {
     
@@ -90,7 +96,8 @@ class LoginViewModel: ObservableObject {
                     self?.token = token
                     self?.loginSuccessMessage = "Hooray!"
                 }
-            ).store(in: &cancellables)
+            )
+            .store(in: &cancellables)
     }
     
     // You may want to intercept what is being written
@@ -103,11 +110,9 @@ class LoginViewModel: ObservableObject {
     }
 }
 
-
 // MARK: - Tests -
 
 /// Test happy path
-
 do {
     /// Default to an environment that fails on all dependencies to make sure we don't use dependencies we didn't expect
     var enviroment = LoginEnvironment.failing
@@ -151,7 +156,6 @@ do {
     assert(vm.token == "TheToken")
     assert(vm.error == nil)
 }
-
 
 /// Test unhappy path
 ///
@@ -217,23 +221,25 @@ struct LoginView: View {
             TextField("", text: $viewModel.password)
                 .textFieldStyle(.roundedBorder)
             Spacer()
-               
+
             Button("Login", action: viewModel.loginTapped)
                 .foregroundColor(viewModel.isButtonEnabled ? .black : .gray)
                 .buttonStyle(.bordered)
-               
+
+            viewModel.loginSuccessMessage.map{ Text("Success: \($0)") }
+            viewModel.error.map{ Text("Error: \($0)") }
+
         }
         .padding()
     }
 }
 
-//
-//PlaygroundPage.current.setLiveView(
-//    LoginView(viewModel: .init(environment: .mock))
-//        .frame(width: 385, height: 667)
-//)
-
-
+PlaygroundPage.current.setLiveView(
+    LoginView(
+        viewModel: .init(environment: .mock)
+    )
+    .frame(width: 385, height: 667)
+)
 
 //: [Next](@next)
 
