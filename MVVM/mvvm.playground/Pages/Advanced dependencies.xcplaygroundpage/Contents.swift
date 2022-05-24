@@ -47,12 +47,12 @@ extension LoginEnvironment {
         apiClient: .happyMock
     )
     
-    static let test = Self(
+    static let failing = Self(
         mainQueue: .failing("\(Self.self).mainQueue is not implemented"),
         apiClient: .failing
     )
 
-    static let failing = Self(
+    static let unhappyMock = Self(
         mainQueue: .main.eraseToAnyScheduler(),
         apiClient: .unhappyMock
     )
@@ -115,7 +115,7 @@ class LoginViewModel: ObservableObject {
 /// Test happy path
 do {
     /// Default to an environment that fails on all dependencies to make sure we don't use dependencies we didn't expect
-    var enviroment = LoginEnvironment.failing
+    var enviroment = LoginEnvironment.unhappyMock
     
     /// Use a Test Scheduler to control the passing of runloops and time on the mainQueue
     let scheduler = DispatchQueue.test
@@ -160,7 +160,7 @@ do {
 /// Test unhappy path
 ///
 /// Default to an environment that fails on all dependencies to make sure we don't use dependencies we didn't expect
-var enviroment = LoginEnvironment.failing
+var enviroment = LoginEnvironment.unhappyMock
 
 /// Use a Test Scheduler to control the passing of runloops and time on the mainQueue
 let scheduler = DispatchQueue.test
@@ -236,7 +236,7 @@ struct LoginView: View {
 
 PlaygroundPage.current.setLiveView(
     LoginView(
-        viewModel: .init(environment: .mock)
+        viewModel: .init(environment: .unhappyMock)
     )
     .frame(width: 385, height: 667)
 )
