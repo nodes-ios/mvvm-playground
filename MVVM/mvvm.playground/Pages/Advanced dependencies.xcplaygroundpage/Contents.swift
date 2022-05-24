@@ -5,6 +5,7 @@ import CombineSchedulers
 import Foundation
 import PlaygroundSupport
 import SwiftUI
+import XCTest
 
 public struct APIError: Error {
     public let message: String
@@ -111,98 +112,99 @@ class LoginViewModel: ObservableObject {
 }
 
 // MARK: - Tests -
+class AdvancedDependenciesTestCase: XCTestCase {
 
-/// Test happy path
-do {
     /// Default to an environment that fails on all dependencies to make sure we don't use dependencies we didn't expect
     var enviroment = LoginEnvironment.unhappyMock
-    
-    /// Use a Test Scheduler to control the passing of runloops and time on the mainQueue
     let scheduler = DispatchQueue.test
-    enviroment.mainQueue = scheduler.eraseToAnyScheduler()
-    
-    /// Properties to save data sent to the 'api' in
     var receivedEmails: [String] = []
     var receivedPasswords: [String] = []
-    
-    /// Replace endpoints inline to monitor how they are called
-    enviroment.apiClient.login = { request in
-        receivedEmails.append(request.email)
-        receivedPasswords.append(request.password)
-        return Just("TheToken").setFailureType(to: APIError.self).eraseToAnyPublisher()
+    let expectedEmail = "j@j.dk"
+    let expectedPassword = "12345678"
+
+    override func setUp() {
+        receivedEmails.removeAll()
+        receivedPasswords.removeAll()
+
+        /// Use a Test Scheduler to control the passing of runloops and time on the mainQueue
+        enviroment.mainQueue = scheduler.eraseToAnyScheduler()
     }
-    
-    let vm = LoginViewModel(environment: enviroment)
-    vm.emailChanged("j@j.dk")
-    assert(!vm.isButtonEnabled)
-    vm.passwordChanged("12345678")
-    assert(vm.isButtonEnabled)
-    vm.loginTapped()
-    
-    /// Make sure vm is now in 'make-api-call' state
-    assert(vm.isButtonEnabled == false)
-    assert(vm.isAPICallInFlight)
-    /// User taps twice by accident
-    vm.loginTapped()
-    /// The main queue advances by one runloop. Because we receive on the mainQueue this will make the apicall complete
-    scheduler.advance()
-    
-    /// Make sure api is only called once with correct email even though user tapped twice
-    assert(receivedEmails == ["j@j.dk"])
-    /// Make sure correct password is sent
-    assert(receivedPasswords == ["12345678"])
-    /// Login was successful
-    assert(vm.loginSuccessMessage == "Hooray!")
-    assert(vm.token == "TheToken")
-    assert(vm.error == nil)
+
+    func testHappyPath() {
+        /// Replace endpoints inline to monitor how they are called
+        enviroment.apiClient.login = { [weak self] request in
+            self?.receivedEmails.append(request.email)
+            self?.receivedPasswords.append(request.password)
+            return Just("TheToken").setFailureType(to: APIError.self).eraseToAnyPublisher()
+        }
+
+        let vm = LoginViewModel(environment: enviroment)
+
+        vm.emailChanged(expectedEmail)
+        XCTAssertFalse(vm.isAPICallInFlight)
+        XCTAssertFalse(vm.isButtonEnabled)
+
+        vm.passwordChanged(expectedPassword)
+        XCTAssertTrue(vm.isButtonEnabled)
+        vm.loginTapped()
+
+        /// Make sure vm is now in 'make-api-call' state
+        XCTAssertFalse(vm.isButtonEnabled)
+        XCTAssertTrue(vm.isAPICallInFlight)
+        /// User taps twice by accident
+        vm.loginTapped()
+        /// The main queue advances by one runloop. Because we receive on the mainQueue this will make the apicall complete
+        scheduler.advance()
+
+        /// Make sure api is only called once with correct email even though user tapped twice
+        XCTAssert(receivedEmails == [expectedEmail])
+        /// Make sure correct password is sent
+        XCTAssert(receivedPasswords == [expectedPassword])
+        /// Login was successful
+        XCTAssert(vm.loginSuccessMessage == "Hooray!")
+        XCTAssert(vm.token == "TheToken")
+        XCTAssertNil(vm.error)
+    }
+
+    func testUnhappyPath() {
+        enviroment.apiClient.login = { [weak self] request in
+            self?.receivedEmails.append(request.email)
+            self?.receivedPasswords.append(request.password)
+            return Fail(
+                error: APIError(
+                    message: "ErrorText",
+                    code: 403
+                )
+            ).eraseToAnyPublisher()
+        }
+
+        let vm = LoginViewModel(environment: enviroment)
+        vm.emailChanged(expectedEmail)
+        XCTAssertFalse(vm.isButtonEnabled)
+        vm.passwordChanged(expectedPassword)
+        XCTAssertTrue(vm.isButtonEnabled)
+        vm.loginTapped()
+        /// Make sure vm is now in 'make-api-call' state
+        XCTAssertFalse(vm.isButtonEnabled)
+        XCTAssertTrue(vm.isAPICallInFlight)
+
+        /// The main queue advances by one runloop. Because we receive on the mainQueue this will make the apicall complete
+        scheduler.advance()
+
+        /// Make sure api is only called once with correct email even though user tapped twice
+        XCTAssert(receivedEmails == [expectedEmail])
+        /// Make sure correct password is sent
+        XCTAssert(receivedPasswords == [expectedPassword])
+        /// Login failed
+        XCTAssert(vm.error == "ErrorText")
+        XCTAssertNil(vm.token)
+    }
 }
 
-/// Test unhappy path
-///
-/// Default to an environment that fails on all dependencies to make sure we don't use dependencies we didn't expect
-var enviroment = LoginEnvironment.unhappyMock
+// And run the tests
+AdvancedDependenciesTestCase.defaultTestSuite.run()
 
-/// Use a Test Scheduler to control the passing of runloops and time on the mainQueue
-let scheduler = DispatchQueue.test
-enviroment.mainQueue = scheduler.eraseToAnyScheduler()
-
-/// Properties to save data sent to the 'api' in
-var receivedEmails: [String] = []
-var receivedPasswords: [String] = []
-
-/// Replace endpoints inline to monitor how they are called
-enviroment.apiClient.login = { request in
-    receivedEmails.append(request.email)
-    receivedPasswords.append(request.password)
-    return Fail(
-        error: APIError(
-            message: "ErrorText",
-            code: 403
-        )
-    ).eraseToAnyPublisher()
-}
-
-let vm = LoginViewModel(environment: enviroment)
-vm.emailChanged("j@j.dk")
-assert(!vm.isButtonEnabled)
-vm.passwordChanged("12345678")
-assert(vm.isButtonEnabled)
-vm.loginTapped()
-/// Make sure vm is now in 'make-api-call' state
-assert(vm.isButtonEnabled == false)
-assert(vm.isAPICallInFlight)
-
-/// The main queue advances by one runloop. Because we receive on the mainQueue this will make the apicall complete
-scheduler.advance()
-
-/// Make sure api is only called once with correct email even though user tapped twice
-assert(receivedEmails == ["j@j.dk"])
-/// Make sure correct password is sent
-assert(receivedPasswords == ["12345678"])
-/// Login failed
-assert(vm.error == "ErrorText")
-assert(vm.token == nil)
-
+// Mark: - SwiftUI View
 struct LoginView: View {
     @ObservedObject var viewModel: LoginViewModel
     var body: some View {
