@@ -180,9 +180,6 @@ PlaygroundPage.current.setLiveView(
         .frame(width: 385, height: 667)
 )
 
-
-
-
 //: [Next](@next)
 
 

@@ -63,12 +63,9 @@ struct LoginView: View {
     }
 }
 
-
 PlaygroundPage.current.setLiveView(
     LoginView(viewModel: .init())
         .frame(width: 385, height: 667)
 )
-
-
 
 //: [Next](@next)
