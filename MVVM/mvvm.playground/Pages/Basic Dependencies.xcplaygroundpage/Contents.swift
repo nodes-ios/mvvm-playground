@@ -4,6 +4,7 @@ import Combine
 import Foundation
 import PlaygroundSupport
 import SwiftUI
+import XCTest
 
 // A really easy way to define dependencies is modellng them as simple structs with functions saved in variables. That way they can be replaced inline as needed for mocking or testing, as opposed to using protocols where you need a new conformance every time you need a specific behaviour from you dependency
 
@@ -76,32 +77,35 @@ class LoginViewModel: ObservableObject {
 
 
 // MARK: Tests
+class BasicDependenciesTestCase: XCTestCase {
+    var apiClient = APIClient.happyMock
+    var receivedEmails: [String] = []
+    var receivedPasswords: [String] = []
+    let expectedEmail = "j@j.dk"
+    let expectedPassword = "12345678"
 
-var apiClient = APIClient.happyMock
+    func testHappyPath() {
 
-var receivedEmails: [String] = []
-var receivedPasswords: [String] = []
+        // Replace endpoints inline to monitor how they are called
+        apiClient.login = { [weak self] request in
+            self?.receivedEmails.append(request.email)
+            self?.receivedPasswords.append(request.password)
+            return Just(()).setFailureType(to: Error.self).eraseToAnyPublisher()
+        }
 
-// Replace endpoints inline to monitor how they are called
-apiClient.login = { request in
-    receivedEmails.append(request.email)
-    receivedPasswords.append(request.password)
-    return Just(()).setFailureType(to: Error.self).eraseToAnyPublisher()
+        let vm = LoginViewModel(apiClient: apiClient)
+        vm.email = expectedEmail
+        XCTAssertFalse(vm.isButtonEnabled)
+        vm.password = expectedPassword
+        XCTAssertTrue(vm.isButtonEnabled)
+        XCTAssertTrue(vm.email == expectedEmail)
+        XCTAssertTrue(vm.password == expectedPassword)
+    }
 }
 
-let vm = LoginViewModel(apiClient: apiClient)
-vm.emailChanged("j@j.dk")
-assert(!vm.isButtonEnabled)
-vm.passwordChanged("12345678")
-assert(vm.isButtonEnabled)
-vm.loginTapped()
-vm.loginTapped() // User taps twice
-assert(vm.loginSuccessMessage == "Hooray!") // Login was successful
-assert(vm.error == nil)
+BasicDependenciesTestCase.defaultTestSuite.run()
 
-assert(receivedEmails.count == 1) // Due to synchronous api this fails right now
-
-
+// MARK: - SwiftUI
 struct LoginView: View {
     @ObservedObject var viewModel: LoginViewModel
     var body: some View {
@@ -124,20 +128,16 @@ struct LoginView: View {
             Button("Login", action: viewModel.loginTapped)
                 .foregroundColor(viewModel.isButtonEnabled ? .black : .gray)
                 .buttonStyle(.bordered)
-               
+            viewModel.loginSuccessMessage.map{ Text("Success: \($0)") }
+            viewModel.error.map{ Text("Error: \($0)") }
         }
         .padding()
     }
 }
-
 
 PlaygroundPage.current.setLiveView(
     LoginView(viewModel: .init(apiClient: .happyMock))
         .frame(width: 385, height: 667)
 )
 
-
-
 //: [Next](@next)
-
-

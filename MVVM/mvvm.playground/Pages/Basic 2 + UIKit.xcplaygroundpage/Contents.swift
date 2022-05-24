@@ -45,7 +45,6 @@ class BasicUIKitTestCase: XCTestCase {
 
         vm.passwordChanged("123456789123456789") // Test that inputting too long password clamps it to 9 chars
         XCTAssertTrue(vm.password == "123456789")
-
     }
 }
 
