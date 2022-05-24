@@ -3,6 +3,7 @@
 import Foundation
 import PlaygroundSupport
 import SwiftUI
+import XCTest
 
 /*:
 The purpose of the ViewModel is to have all data and logic in one place with well defined interfaces and dependencies
@@ -32,12 +33,17 @@ class LoginViewModel: ObservableObject {
 }
 
 // MARK: - Simple unit tests of button enabled state
+class BasicTestCase: XCTestCase {
+    func testHappyPath() {
+        let vm = LoginViewModel()
+        vm.email = "j@j.dk"
+        XCTAssertFalse(vm.isButtonEnabled)
+        vm.password = "12345678"
+        XCTAssertTrue(vm.isButtonEnabled)
+    }
+}
 
-let vm = LoginViewModel()
-vm.email = "j@j.dk"
-assert(!vm.isButtonEnabled)
-vm.password = "12345678"
-assert(vm.isButtonEnabled)
+BasicTestCase.defaultTestSuite.run()
 
 struct LoginView: View {
     @ObservedObject var viewModel: LoginViewModel
