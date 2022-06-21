@@ -4,10 +4,6 @@ import SwiftUI
 import UIKit
 import XCTestDynamicOverlay
 
-public func assert(_ condition: @autoclosure () -> Bool) -> String {
-    return condition() ? "✅" : "❌"
-}
-
 public struct ToSwiftUI: UIViewControllerRepresentable {
     
     let viewController: () -> UIViewController

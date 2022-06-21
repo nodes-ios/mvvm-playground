@@ -1,9 +1,10 @@
 //: [Previous](@previous)
 
+import Combine
 import Foundation
 import PlaygroundSupport
 import SwiftUI
-import Combine
+import XCTest
 
 /// Sometimes you may want to intercept what is being written to the property. To do this you can make a custom Binding in the SwiftUI view that calls a set function on the ViewModel.
 /// The same ViewModel can be used in UIKit. At the bottom there's UIViewController using the ViewModel
@@ -29,14 +30,25 @@ class LoginViewModel: ObservableObject {
 }
 
 // MARK: Tests
+class BasicUIKitTestCase: XCTestCase {
+    func testHappyPath() {
+        let expectedEmail = "j@j.dk"
+        let expectedPassword = "12345678"
 
-let vm = LoginViewModel()
-vm.emailChanged("j@j.dk")
-assert(!vm.isButtonEnabled)
-vm.passwordChanged("123456789") // Test input within length limits
-assert(vm.password == "123456789")
-vm.passwordChanged("123456789123456789") // Test that inputting too long password clamps it to 9 chars
-assert(vm.password == "123456789")
+        let vm = LoginViewModel()
+        vm.email = expectedEmail
+        XCTAssertFalse(vm.isButtonEnabled)
+        vm.password = expectedPassword
+        XCTAssertTrue(vm.isButtonEnabled)
+        XCTAssertTrue(vm.email == expectedEmail)
+        XCTAssertTrue(vm.password == expectedPassword)
+
+        vm.passwordChanged("123456789123456789") // Test that inputting too long password clamps it to 9 chars
+        XCTAssertTrue(vm.password == "123456789")
+    }
+}
+
+BasicUIKitTestCase.defaultTestSuite.run()
 
 /// SwiftUI version
 struct LoginView: View {
@@ -167,9 +179,6 @@ PlaygroundPage.current.setLiveView(
     }
         .frame(width: 385, height: 667)
 )
-
-
-
 
 //: [Next](@next)
 
