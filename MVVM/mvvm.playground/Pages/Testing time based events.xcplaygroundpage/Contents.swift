@@ -55,16 +55,16 @@ class OnboardingViewModelTestCase: XCTestCase {
         XCTAssertEqual(viewModel.currentCard, items[0])
         
         // Even if 10 seconds pass, it should still show the first element since
-        // we haven't called started the carousel
+        // we haven't started the carousel
         await clock.advance(by: .seconds(10))
         XCTAssertEqual(viewModel.currentCard, items[0])
         
-        // After starting the carousel we should still see the first element
+        // After 0.5s the carousel we should still see the 1st element
         viewModel.start()
         await clock.advance(by: .seconds(0.5))
         XCTAssertEqual(viewModel.currentCard, items[0])
         
-        // But after further 0.6 (1.1s) we should see the second element
+        // But after further 0.6 (1.1s) we should see the 2nd element
         await clock.advance(by: .seconds(0.6))
         XCTAssertEqual(viewModel.currentCard, items[1])
         
@@ -72,11 +72,11 @@ class OnboardingViewModelTestCase: XCTestCase {
         await clock.advance(by: .seconds(3))
         XCTAssertEqual(viewModel.currentCard, items[4])
         
-        // 1 second later it should go back to the first element
+        // 2 seconds later it should go back to the 2nd element
         await clock.advance(by: .seconds(2))
         XCTAssertEqual(viewModel.currentCard, items[1])
         
-        // After we stop the carousel, it shouldn't update
+        // After we stop the carousel, it should still show the 2nd element
         viewModel.stop()
         await clock.advance(by: .seconds(3))
         XCTAssertEqual(viewModel.currentCard, items[1])
