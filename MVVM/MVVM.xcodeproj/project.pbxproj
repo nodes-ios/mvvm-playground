@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A569D7F1290BF6040053A48F /* Clocks in Frameworks */ = {isa = PBXBuildFile; productRef = A569D7F0290BF6040053A48F /* Clocks */; };
 		BD43014B27CFA04100EC0A07 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD43014A27CFA04100EC0A07 /* AppDelegate.swift */; };
 		BDC59D3827A839320054A19B /* CombineSchedulers in Frameworks */ = {isa = PBXBuildFile; productRef = BDC59D3727A839320054A19B /* CombineSchedulers */; };
 		BDF647B827BE381100EF94EF /* XCTestDynamicOverlay in Frameworks */ = {isa = PBXBuildFile; productRef = BDF647B727BE381100EF94EF /* XCTestDynamicOverlay */; };
@@ -26,6 +27,7 @@
 			files = (
 				BDF647B827BE381100EF94EF /* XCTestDynamicOverlay in Frameworks */,
 				BDC59D3827A839320054A19B /* CombineSchedulers in Frameworks */,
+				A569D7F1290BF6040053A48F /* Clocks in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,6 +79,7 @@
 			packageProductDependencies = (
 				BDC59D3727A839320054A19B /* CombineSchedulers */,
 				BDF647B727BE381100EF94EF /* XCTestDynamicOverlay */,
+				A569D7F0290BF6040053A48F /* Clocks */,
 			);
 			productName = MVVM;
 			productReference = BDC59D1F27A82C820054A19B /* MVVM.app */;
@@ -110,6 +113,7 @@
 			packageReferences = (
 				BDC59D3627A839320054A19B /* XCRemoteSwiftPackageReference "combine-schedulers" */,
 				BDF647B627BE381100EF94EF /* XCRemoteSwiftPackageReference "xctest-dynamic-overlay" */,
+				A569D7EF290BF6040053A48F /* XCRemoteSwiftPackageReference "swift-clocks" */,
 			);
 			productRefGroup = BDC59D2027A82C820054A19B /* Products */;
 			projectDirPath = "";
@@ -339,6 +343,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		A569D7EF290BF6040053A48F /* XCRemoteSwiftPackageReference "swift-clocks" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-clocks";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.4;
+			};
+		};
 		BDC59D3627A839320054A19B /* XCRemoteSwiftPackageReference "combine-schedulers" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/combine-schedulers.git";
@@ -358,6 +370,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A569D7F0290BF6040053A48F /* Clocks */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A569D7EF290BF6040053A48F /* XCRemoteSwiftPackageReference "swift-clocks" */;
+			productName = Clocks;
+		};
 		BDC59D3727A839320054A19B /* CombineSchedulers */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = BDC59D3627A839320054A19B /* XCRemoteSwiftPackageReference "combine-schedulers" */;
