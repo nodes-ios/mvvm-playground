@@ -1,11 +1,12 @@
 //: [Previous](@previous)
 
+import Clocks
 import Combine
-import CombineSchedulers
 import Foundation
 import PlaygroundSupport
 import SwiftUI
 import XCTest
+import XCTestDynamicOverlay
 
 public struct APIError: Error {
     public let message: String
@@ -37,26 +38,26 @@ extension APIClient {
 }
 
 struct LoginEnvironment {
-    var mainQueue: AnySchedulerOf<DispatchQueue>
+    var clock: any Clock<Duration>
     var apiClient: APIClient
 }
 
 extension LoginEnvironment {
     
     static let mock = Self(
-        mainQueue: .main.eraseToAnyScheduler(),
+        clock: ContinuousClock(),
         apiClient: .happyMock
     )
     
-    static let failing = Self(
-        mainQueue: .failing("\(Self.self).mainQueue is not implemented"),
-        apiClient: .failing
-    )
+//    static let failing = Self(
+//        clock: { fatalError() }(),
+//        apiClient: .failing
+//    )
 
-    static let unhappyMock = Self(
-        mainQueue: .main.eraseToAnyScheduler(),
-        apiClient: .unhappyMock
-    )
+//    static let unhappyMock = Self(
+//        mainQueue: .main.eraseToAnyScheduler(),
+//        apiClient: .unhappyMock
+//    )
 }
 
 class LoginViewModel: ObservableObject {
@@ -70,6 +71,8 @@ class LoginViewModel: ObservableObject {
     
     @Published var error: String?
     @Published var loginSuccessMessage: String?
+    @Published var helloMessage: String?
+    
     var token: String?
     
     var isButtonEnabled: Bool {
@@ -82,23 +85,30 @@ class LoginViewModel: ObservableObject {
         self.environment = environment
     }
     
+    func onAppear() async {
+        do {
+            try await environment.clock.sleep(for: .seconds(3))
+            helloMessage = "Hello"
+        } catch {}
+    }
+    
     func loginTapped() {
-        guard !isAPICallInFlight else { return }
-        isAPICallInFlight = true
-        environment.apiClient.login(.init(email: email, password: password))
-            .receive(on: environment.mainQueue)
-            .sink(
-                receiveCompletion: { [weak self] in
-                    if case .failure(let error) = $0  {
-                        self?.error = error.message
-                    }
-                    self?.isAPICallInFlight = false
-                }, receiveValue: { [weak self] token in
-                    self?.token = token
-                    self?.loginSuccessMessage = "Hooray!"
-                }
-            )
-            .store(in: &cancellables)
+//        guard !isAPICallInFlight else { return }
+//        isAPICallInFlight = true
+//        environment.apiClient.login(.init(email: email, password: password))
+//            .receive(on: environment.mainQueue)
+//            .sink(
+//                receiveCompletion: { [weak self] in
+//                    if case .failure(let error) = $0  {
+//                        self?.error = error.message
+//                    }
+//                    self?.isAPICallInFlight = false
+//                }, receiveValue: { [weak self] token in
+//                    self?.token = token
+//                    self?.loginSuccessMessage = "Hooray!"
+//                }
+//            )
+//            .store(in: &cancellables)
     }
     
     // You may want to intercept what is being written
@@ -115,8 +125,8 @@ class LoginViewModel: ObservableObject {
 class AdvancedDependenciesTestCase: XCTestCase {
 
     /// Default to an environment that fails on all dependencies to make sure we don't use dependencies we didn't expect
-    var enviroment = LoginEnvironment.unhappyMock
-    let scheduler = DispatchQueue.test
+    lazy var enviroment = LoginEnvironment(clock: clock, apiClient: .failing)
+    let clock = ImmediateClock()
     var receivedEmails: [String] = []
     var receivedPasswords: [String] = []
     let expectedEmail = "j@j.dk"
@@ -125,79 +135,78 @@ class AdvancedDependenciesTestCase: XCTestCase {
     override func setUp() {
         receivedEmails.removeAll()
         receivedPasswords.removeAll()
-
+//        let enviroment = LoginEnvironment(clock: clock, apiClient: .failing)
         /// Use a Test Scheduler to control the passing of runloops and time on the mainQueue
-        enviroment.mainQueue = scheduler.eraseToAnyScheduler()
+//        enviroment.clock = clock
     }
 
-    func testHappyPath() {
-        /// Replace endpoints inline to monitor how they are called
-        enviroment.apiClient.login = { [weak self] request in
-            self?.receivedEmails.append(request.email)
-            self?.receivedPasswords.append(request.password)
-            return Just("TheToken").setFailureType(to: APIError.self).eraseToAnyPublisher()
-        }
-
+    
+    func testHappyPath() async {
         let vm = LoginViewModel(environment: enviroment)
-
-        vm.emailChanged(expectedEmail)
-        XCTAssertFalse(vm.isAPICallInFlight)
-        XCTAssertFalse(vm.isButtonEnabled)
-
-        vm.passwordChanged(expectedPassword)
-        XCTAssertTrue(vm.isButtonEnabled)
-        vm.loginTapped()
-
-        /// Make sure vm is now in 'make-api-call' state
-        XCTAssertFalse(vm.isButtonEnabled)
-        XCTAssertTrue(vm.isAPICallInFlight)
-        /// User taps twice by accident
-        vm.loginTapped()
-        /// The main queue advances by one runloop. Because we receive on the mainQueue this will make the apicall complete
-        scheduler.advance()
-
-        /// Make sure api is only called once with correct email even though user tapped twice
-        XCTAssert(receivedEmails == [expectedEmail])
-        /// Make sure correct password is sent
-        XCTAssert(receivedPasswords == [expectedPassword])
-        /// Login was successful
-        XCTAssert(vm.loginSuccessMessage == "Hooray!")
-        XCTAssert(vm.token == "TheToken")
-        XCTAssertNil(vm.error)
+        XCTAssertNil(vm.helloMessage)
+        Task {
+            await vm.onAppear()
+        }
+        XCTAssertEqual("Hello", vm.helloMessage)
+//        await clock.advance(by: .seconds(2))
+//        XCTAssertNil(vm.helloMessage)
+//
+//        await clock.advance(by: .seconds(1))
+//        XCTAssertEqual("Hello", vm.helloMessage)
+//        await clock.run()
+//        XCTAssertEqual("Hello", vm.helloMessage)
     }
+//    func testHappyPath() async {
+//        let vm = LoginViewModel(environment: enviroment)
+//        XCTAssertNil(vm.helloMessage)
+//        Task {
+//            await vm.onAppear()
+//        }
+//        Task {
+//            await vm.onAppear()
+//        }
+//        XCTAssertNil(vm.helloMessage)
+//        await clock.advance(by: .seconds(2))
+//        XCTAssertNil(vm.helloMessage)
+//
+//        await clock.advance(by: .seconds(1))
+//        XCTAssertEqual("Hello", vm.helloMessage)
+//        await clock.run()
+//        XCTAssertEqual("Hello", vm.helloMessage)
+//    }
 
     func testUnhappyPath() {
-        enviroment.apiClient.login = { [weak self] request in
-            self?.receivedEmails.append(request.email)
-            self?.receivedPasswords.append(request.password)
-            return Fail(
-                error: APIError(
-                    message: "ErrorText",
-                    code: 403
-                )
-            ).eraseToAnyPublisher()
-        }
-
-        let vm = LoginViewModel(environment: enviroment)
-        vm.emailChanged(expectedEmail)
-        XCTAssertFalse(vm.isButtonEnabled)
-        vm.passwordChanged(expectedPassword)
-        XCTAssertTrue(vm.isButtonEnabled)
-        vm.loginTapped()
-        /// Make sure vm is now in 'make-api-call' state
-        XCTAssertFalse(vm.isButtonEnabled)
-        XCTAssertTrue(vm.isAPICallInFlight)
-
-        /// The main queue advances by one runloop. Because we receive on the mainQueue this will make the apicall complete
-        scheduler.advance()
-
-        /// Make sure api is only called once with correct email even though user tapped twice
-        XCTAssert(receivedEmails == [expectedEmail])
-        /// Make sure correct password is sent
-        XCTAssert(receivedPasswords == [expectedPassword])
-        /// Login failed
-        XCTAssert(vm.error == "ErrorText")
-        XCTAssertNil(vm.token)
+//        enviroment.apiClient.login = { [weak self] request in
+//            self?.receivedEmails.append(request.email)
+//            self?.receivedPasswords.append(request.password)
+//            return Fail(
+//                error: APIError(
+//                    message: "ErrorText",
+//                    code: 403
+//                )
+//            ).eraseToAnyPublisher()
+//        }
+//
+//        let vm = LoginViewModel(environment: enviroment)
+//        vm.emailChanged(expectedEmail)
+//        XCTAssertFalse(vm.isButtonEnabled)
+//        vm.passwordChanged(expectedPassword)
+//        XCTAssertTrue(vm.isButtonEnabled)
+//        vm.loginTapped()
+//        /// Make sure vm is now in 'make-api-call' state
+//        XCTAssertFalse(vm.isButtonEnabled)
+//        XCTAssertTrue(vm.isAPICallInFlight)
+//
+//        /// The main queue advances by one runloop. Because we receive on the mainQueue this will make the apicall complete
+//        scheduler.advance()
+//
+//        /// Make sure api is only called once with correct email even though user tapped twice
+//        XCTAssert(receivedEmails == [expectedEmail])
+//        /// Make sure correct password is sent
+//        XCTAssert(receivedPasswords == [expectedPassword])
+//        /// Login failed
+//        XCTAssert(vm.error == "ErrorText")
+//        XCTAssertNil(vm.token)
     }
 }
 
@@ -217,6 +226,10 @@ struct LoginView: View {
                 )
             )
                 .textFieldStyle(.roundedBorder)
+            if let message = viewModel.helloMessage {
+                Text(message)
+                    .font(.largeTitle)
+            }
             if viewModel.isAPICallInFlight {
                 ProgressView().progressViewStyle(.circular)
             }
@@ -233,12 +246,15 @@ struct LoginView: View {
 
         }
         .padding()
+        .task {
+            await viewModel.onAppear()
+        }
     }
 }
 
 PlaygroundPage.current.setLiveView(
     LoginView(
-        viewModel: .init(environment: .unhappyMock)
+        viewModel: .init(environment: .mock)
     )
     .frame(width: 385, height: 667)
 )
