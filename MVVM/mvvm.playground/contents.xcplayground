@@ -7,5 +7,6 @@
         <page name='Advanced dependencies'/>
         <page name='[WIP]Mixing VIPER and MVVM'/>
         <page name='[WIP]Testing VIPER, easy edition'/>
+        <page name='New Dependencies'/>
     </pages>
 </playground>
